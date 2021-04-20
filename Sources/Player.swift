@@ -61,6 +61,7 @@ public protocol PlayerDelegate: AnyObject {
     func playerBufferTimeDidChange(_ bufferTime: Double)
 
     func player(_ player: Player, didFailWithError error: Error?)
+    func playerDidChangeExternalPlaybackActive(_ player: Player)
 }
 
 
@@ -311,6 +312,41 @@ open class Player: UIViewController {
             } else {
                 return CGSize.zero
             }
+        }
+    }
+  
+    /// A Boolean value that indicates whether the player allows switching to external playback mode.
+    open var allowsExternalPlayback: Bool {
+        get {
+            return self._avplayer.allowsExternalPlayback
+        }
+        set {
+            self._avplayer.allowsExternalPlayback = newValue
+        }
+    }
+    
+    /// A Boolean value that indicates whether the player is currently playing video in external playback mode.
+    open var isExternalPlaybackActive: Bool {
+        return self._avplayer.isExternalPlaybackActive
+    }
+    
+    /// The video gravity of the player for external playback mode only.
+    open var externalPlaybackVideoGravity: AVLayerVideoGravity {
+        get {
+            return self._avplayer.externalPlaybackVideoGravity
+        }
+        set {
+            self._avplayer.externalPlaybackVideoGravity = newValue
+        }
+    }
+    
+    /// A Boolean value that indicates whether the player should automatically switch to external playback mode while the external screen mode is active.
+    open var usesExternalPlaybackWhileExternalScreenIsActive: Bool {
+        get {
+            return self._avplayer.usesExternalPlaybackWhileExternalScreenIsActive
+        }
+        set {
+            self._avplayer.usesExternalPlaybackWhileExternalScreenIsActive = newValue
         }
     }
 
@@ -898,8 +934,13 @@ extension Player {
                     break
                 }
             })
-        }
 
+            self._playerObservers.append(self._avplayer.observe(\.isExternalPlaybackActive, options: [.new, .old]) { [weak self] (object, change) in
+                if let self = self, let newValue = change.newValue, let oldValue = change.oldValue, newValue != oldValue {
+                    self.playerDelegate?.playerDidChangeExternalPlaybackActive(self)
+                }
+            })
+        }
     }
 
     internal func removePlayerObservers() {
