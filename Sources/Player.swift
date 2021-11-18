@@ -72,6 +72,7 @@ public protocol PlayerPlaybackDelegate: AnyObject {
     func playerPlaybackDidEnd(_ player: Player)
     func playerPlaybackWillLoop(_ player: Player)
     func playerPlaybackDidLoop(_ player: Player)
+    func playerDidPlayToEndTime(_ player: Player)
 }
 
 // MARK: - Player
@@ -766,6 +767,7 @@ extension Player {
 
     @objc internal func playerItemDidPlayToEndTime(_ aNotification: Notification) {
         self.executeClosureOnMainQueueIfNecessary {
+            self.playbackDelegate?.playerDidPlayToEndTime(self)
             if self.playbackLoops {
                 self.playbackDelegate?.playerPlaybackWillLoop(self)
                 self._avplayer.seek(to: CMTime.zero)
